@@ -127,6 +127,8 @@ class PortfolioManager:
                 high = row["high"]
                 low = row["low"]
                 atr = row.get("atr_14", current_price * 0.02)
+                if pd.isna(atr) or atr <= 0:
+                    atr = current_price * 0.02
 
                 # Update highest price for trailing stop
                 if current_price > position.highest_price:
@@ -251,7 +253,6 @@ class PortfolioManager:
             for s in symbols_to_close:
                 del positions[s]
 
-            # ===== CHECK FOR NEW BUY SIGNALS =====
                         # ===== CHECK FOR NEW BUY SIGNALS =====
             
             # Do portfolio risk check ONCE per day (not per stock)
@@ -289,6 +290,8 @@ class PortfolioManager:
                     # Calculate position size
                     entry_price = row["close"] * (1 + self.slippage_rate)
                     atr = row.get("atr_14", entry_price * 0.02)
+                    if pd.isna(atr) or atr <= 0:
+                        atr = entry_price * 0.02
 
                     shares = self.risk_manager.volatility_based_size(
                         cash, entry_price, atr
@@ -326,9 +329,13 @@ class PortfolioManager:
                     logger.info(f"🟢 BUY {symbol}: {date.strftime('%Y-%m-%d')} | "
                               f"Price: ${entry_price:.2f} | Shares: {shares} | "
                               f"SL: ${stop_loss:.2f} | TP: ${take_profit:.2f}")
+                    
+
                 # Calculate position size
                 entry_price = row["close"] * (1 + self.slippage_rate)
                 atr = row.get("atr_14", entry_price * 0.02)
+                if pd.isna(atr) or atr <= 0:
+                    atr = entry_price * 0.02
 
                 # Use volatility-based sizing
                 shares = self.risk_manager.volatility_based_size(

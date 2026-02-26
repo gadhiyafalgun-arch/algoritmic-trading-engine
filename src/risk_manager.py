@@ -86,7 +86,7 @@ class RiskManager:
             
         This is the MOST COMMON professional method.
         """
-        if entry_price <= 0 or stop_loss_price <= 0:
+        if entry_price <= 0 or stop_loss_price <= 0 or pd.isna(entry_price) or pd.isna(stop_loss_price):
             return 0
 
         # Amount we're willing to lose
@@ -136,7 +136,7 @@ class RiskManager:
             
         We use QUARTER Kelly for safety.
         """
-        if avg_loss == 0 or win_rate <= 0 or entry_price <= 0:
+        if avg_loss == 0 or win_rate <= 0 or entry_price <= 0 or pd.isna(avg_loss) or pd.isna(win_rate):
             return 0
 
         # Win/Loss ratio
@@ -177,7 +177,8 @@ class RiskManager:
             Stop Distance = ATR × Multiplier
             Shares = Risk Amount / Stop Distance
         """
-        if atr <= 0 or entry_price <= 0:
+        # Handle NaN or invalid values
+        if pd.isna(atr) or atr <= 0 or entry_price <= 0 or capital <= 0:
             return 0
 
         # Risk amount
@@ -185,6 +186,9 @@ class RiskManager:
 
         # Stop distance based on ATR
         stop_distance = atr * atr_multiplier
+
+        if stop_distance <= 0 or pd.isna(stop_distance):
+            return 0
 
         # Shares
         shares = int(risk_amount / stop_distance)
