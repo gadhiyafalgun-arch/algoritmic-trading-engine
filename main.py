@@ -4,7 +4,7 @@ Algorithmic Trading Engine
 Main entry point for the application.
 
 Author: Your Name
-Version: 4.0.0 — Phase 4 (Risk Management)
+Version: 5.0.0 — Phase 5 (Machine Learning)
 """
 
 from src.data_pipeline import DataPipeline
@@ -16,6 +16,9 @@ from src.risk_manager import RiskManager
 from src.portfolio_manager import PortfolioManager
 from src.visualizer import Visualizer
 from src.utils import ensure_directories
+from models.feature_engineer import FeatureEngineer
+from models.train import MLTrainer
+from models.predict import MLPredictor
 from loguru import logger
 import sys
 
@@ -29,7 +32,7 @@ def main():
     """Main function — runs the complete trading engine."""
 
     logger.info("=" * 60)
-    logger.info("🚀 ALGORITHMIC TRADING ENGINE v4.0.0")
+    logger.info("🚀 ALGORITHMIC TRADING ENGINE v5.0.0")
     logger.info("=" * 60)
 
     ensure_directories()
@@ -44,7 +47,6 @@ def main():
     summary = pipeline.get_summary(data)
     print("\n📋 DATA SUMMARY:")
     print(summary.to_string(index=False))
-    print()
 
     # ==========================================
     # PHASE 2: Technical Indicators & Strategy
@@ -64,7 +66,7 @@ def main():
     # ==========================================
     # PHASE 3: Basic Backtesting
     # ==========================================
-    logger.info("\n🏃 PHASE 3: Basic Backtesting (Single Stock)")
+    logger.info("\n🏃 PHASE 3: Basic Backtesting")
 
     backtester = Backtester()
     performance = PerformanceAnalyzer()
@@ -73,14 +75,11 @@ def main():
     first_symbol = list(processed_data.keys())[0]
     first_df = processed_data[first_symbol]
 
-    # Run basic backtest on first stock for comparison
     basic_results = backtester.run_multiple_strategies(
         first_df, first_symbol,
-        ["sma_signal", "rsi_signal", "macd_trade_signal",
-         "bb_signal", "combined_signal"]
+        ["sma_signal", "combined_signal"]
     )
 
-    # Performance metrics
     basic_metrics = {}
     for strat_name, results in basic_results.items():
         metrics = performance.calculate_all_metrics(
@@ -90,97 +89,114 @@ def main():
         )
         basic_metrics[strat_name] = metrics
 
-    # Print comparison
     if basic_metrics:
         comparison = performance.generate_comparison_report(basic_metrics)
         print(comparison)
 
     # ==========================================
-    # PHASE 4: Advanced Risk Management
+    # PHASE 4: Risk Management
     # ==========================================
-    logger.info("\n🛡️ PHASE 4: Advanced Risk Management")
+    logger.info("\n🛡️ PHASE 4: Risk Management")
 
     risk_manager = RiskManager()
-
-    # 4A: Risk Report
-    logger.info("\n📋 Generating Risk Report...")
-    first_results = list(basic_results.values())[0] if basic_results else None
-    portfolio_value = first_results["final_value"] if first_results else 100000
-
-    risk_report = risk_manager.generate_risk_report(processed_data, portfolio_value)
+    risk_report = risk_manager.generate_risk_report(
+        processed_data,
+        list(basic_results.values())[0]["final_value"] if basic_results else 100000
+    )
     print(risk_report)
 
-    # 4B: Position Sizing Demo
-    logger.info("\n📏 Position Sizing Recommendations:")
-    for symbol, df in list(processed_data.items())[:3]:  # First 3 stocks
-        latest = df.iloc[-1]
-        price = latest["close"]
-        atr = latest.get("atr_14", price * 0.02)
+    # ==========================================
+    # PHASE 5: Machine Learning
+    # ==========================================
+    logger.info("\n🧠 PHASE 5: Machine Learning")
+    logger.info("=" * 60)
 
-        # Calculate win rate from basic backtest
-        win_rate = 0.5
-        avg_win = 1000
-        avg_loss = -500
-        if symbol == first_symbol and basic_metrics:
-            best_strat = list(basic_metrics.values())[0]
-            win_rate = best_strat.get("win_rate", 0.5)
-            avg_win = best_strat.get("avg_win", 1000)
-            avg_loss = best_strat.get("avg_loss", -500)
+    # 5A: Feature Engineering
+    logger.info("\n📐 Step 5A: Feature Engineering")
+    feature_eng = FeatureEngineer()
 
-        recommendations = risk_manager.recommend_position_size(
-            capital=100000,
-            entry_price=price,
-            atr=atr,
-            win_rate=max(win_rate, 0.1),
-            avg_win=max(avg_win, 1),
-            avg_loss=min(avg_loss, -1)
+    ml_processed = {}
+    for symbol, df in processed_data.items():
+        logger.info(f"Creating features for {symbol}...")
+        ml_df = feature_eng.create_all_features(df)
+        ml_processed[symbol] = ml_df
+
+    # 5B: Prepare ML Data (using first stock)
+    logger.info(f"\n📊 Step 5B: Preparing ML Data for {first_symbol}")
+    ml_data = feature_eng.prepare_ml_data(ml_processed[first_symbol])
+
+    if ml_data:
+        # 5C: Train Models
+        logger.info("\n🏋️ Step 5C: Training Models")
+        trainer = MLTrainer()
+        model_results = trainer.train_all_models(ml_data)
+
+        # 5D: Walk-Forward Validation
+        logger.info("\n🔄 Step 5D: Walk-Forward Validation")
+        feature_cols = ml_data["feature_columns"]
+        wf_results = trainer.walk_forward_validation(
+            ml_processed[first_symbol],
+            feature_cols,
+            target_col="target_1d",
+            n_splits=5
         )
 
-        print(f"\n📊 {symbol} (Price: ${price:.2f}, ATR: ${atr:.2f})")
-        print(f"   Fixed Fractional:  {recommendations['fixed_fractional']['shares']} shares "
-              f"(${recommendations['fixed_fractional']['value']:,.0f} = "
-              f"{recommendations['fixed_fractional']['pct_of_capital']:.1f}%)")
-        print(f"   Kelly Criterion:   {recommendations['kelly_criterion']['shares']} shares "
-              f"(${recommendations['kelly_criterion']['value']:,.0f} = "
-              f"{recommendations['kelly_criterion']['pct_of_capital']:.1f}%)")
-        print(f"   Volatility-Based:  {recommendations['volatility_based']['shares']} shares "
-              f"(${recommendations['volatility_based']['value']:,.0f} = "
-              f"{recommendations['volatility_based']['pct_of_capital']:.1f}%)")
-        print(f"   ➡️  Conservative:   {recommendations['recommended_conservative']} shares")
-        print(f"   ➡️  Moderate:       {recommendations['recommended_moderate']} shares")
+        # Print ML Report
+        ml_report = trainer.generate_ml_report(model_results, wf_results)
+        print(ml_report)
 
-    # 4C: Portfolio Backtest (Multi-Stock with Risk Management)
-    logger.info("\n\n🏃 Running PORTFOLIO Backtest (Multi-Stock with Risk Management)...")
-    portfolio_mgr = PortfolioManager()
+        # 5E: Generate ML Signals
+        logger.info("\n🎯 Step 5E: Generating ML Trading Signals")
+        predictor = MLPredictor()
 
-    portfolio_results = portfolio_mgr.run_portfolio_backtest(
-        processed_data, signal_column="combined_signal"
-    )
+        for symbol, df in ml_processed.items():
+            ml_processed[symbol] = predictor.generate_ml_signals(df)
 
-    # Portfolio performance metrics
-    if portfolio_results["portfolio_history"] is not None and not portfolio_results["portfolio_history"].empty:
-        portfolio_metrics = performance.calculate_all_metrics(
-            portfolio_results["portfolio_history"],
-            portfolio_results["trades"],
-            portfolio_results["initial_capital"]
-        )
+        # 5F: Backtest ML Strategy
+        logger.info("\n🏃 Step 5F: Backtesting ML Strategy")
+        first_ml_df = ml_processed[first_symbol]
 
-        portfolio_report = performance.generate_report(
-            portfolio_metrics, "PORTFOLIO", "combined_signal + Risk Mgmt"
-        )
-        print(portfolio_report)
+        if "ml_signal" in first_ml_df.columns and first_ml_df["ml_signal"].abs().sum() > 0:
+            ml_backtest = backtester.run(
+                first_ml_df,
+                signal_column="ml_signal",
+                symbol=first_symbol
+            )
+
+            if ml_backtest:
+                ml_metrics = performance.calculate_all_metrics(
+                    ml_backtest["portfolio_history"],
+                    ml_backtest["trades"],
+                    ml_backtest["initial_capital"]
+                )
+
+                ml_performance_report = performance.generate_report(
+                    ml_metrics, first_symbol, "ML Strategy"
+                )
+                print(ml_performance_report)
+
+                # Compare ML vs Traditional
+                print(f"\n{'='*60}")
+                print(f"{'🏆 ML vs TRADITIONAL COMPARISON':^60}")
+                print(f"{'='*60}")
+
+                all_compare = {**basic_metrics}
+                all_compare["ML_Strategy"] = ml_metrics
+
+                final_comparison = performance.generate_comparison_report(all_compare)
+                print(final_comparison)
+        else:
+            logger.warning("ML model generated no signals — skipping ML backtest")
 
     # ==========================================
     # VISUALIZATION
     # ==========================================
     logger.info("\n📊 Generating Charts...")
 
-    # Chart 1: Price with signals
     visualizer.plot_price_with_signals(
         first_df, first_symbol, signal_column="combined_signal"
     )
 
-    # Chart 2: Basic backtest results
     if "combined_signal" in basic_results:
         visualizer.plot_backtest_results(
             basic_results["combined_signal"]["portfolio_history"],
@@ -189,17 +205,7 @@ def main():
             basic_results["combined_signal"]["initial_capital"]
         )
 
-    # Chart 3: Strategy comparison
     visualizer.plot_equity_comparison(basic_results, first_symbol)
-
-    # Chart 4: Portfolio backtest
-    if portfolio_results["portfolio_history"] is not None and not portfolio_results["portfolio_history"].empty:
-        visualizer.plot_backtest_results(
-            portfolio_results["portfolio_history"],
-            portfolio_results["trades"],
-            "PORTFOLIO", "combined + risk_mgmt",
-            portfolio_results["initial_capital"]
-        )
 
     # ==========================================
     # SAVE
@@ -208,14 +214,15 @@ def main():
     pipeline.save_data(processed_data, data_type="processed")
 
     # ==========================================
-    # FINAL SUMMARY
+    # FINAL
     # ==========================================
     logger.info("\n" + "=" * 60)
-    logger.info("✅ ALL PHASES (1-4) COMPLETE!")
+    logger.info("✅ ALL PHASES (1-5) COMPLETE!")
     logger.info("=" * 60)
-    logger.info("📁 Charts saved in: docs/charts/")
-    logger.info("📁 Data saved in: data/processed/")
-    logger.info("🔜 Next: Phase 5 — Machine Learning Integration")
+    logger.info("📁 Charts: docs/charts/")
+    logger.info("📁 Data: data/processed/")
+    logger.info("📁 Models: models/saved/")
+    logger.info("🔜 Next: Phase 6 — Dashboard & Polish")
 
 
 if __name__ == "__main__":

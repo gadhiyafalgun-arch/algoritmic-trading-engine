@@ -1,0 +1,6 @@
+{
+  "best_model": "logistic_regression",
+  "test_accuracy": 0.39622641509433965,
+  "test_f1": 0.30434782608695654,
+  "n_features": 118
+}
