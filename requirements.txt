@@ -7,9 +7,6 @@ scipy
 yfinance
 pandas-datareader
 
-# Technical Analysis
-pandas-ta @ git+https://github.com/twopirllc/pandas-ta.git@development
-
 # Visualization
 matplotlib
 plotly
