@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Algorithmic Trading Engine — Live Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0e17;
+      color: #c9d1d9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", monospace;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      height: 52px;
+      background: #0d1117;
+      border-bottom: 1px solid #21262d;
+      flex-shrink: 0;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #3fb950, #58a6ff);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .logo-text {
+      font-size: 15px;
+      font-weight: 600;
+      background: linear-gradient(90deg, #3fb950, #58a6ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-badges {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .badge {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 20px;
+      border: 1px solid;
+      opacity: 0.8;
+    }
+
+    .badge-green  { color: #3fb950; border-color: #3fb950; }
+    .badge-blue   { color: #58a6ff; border-color: #58a6ff; }
+    .badge-purple { color: #bc8cff; border-color: #bc8cff; }
+
+    /* ── Instruction bar ── */
+    .instruction-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      height: 38px;
+      background: #161b22;
+      border-bottom: 1px solid #21262d;
+      flex-shrink: 0;
+      font-size: 12.5px;
+      color: #8b949e;
+    }
+
+    .instruction-bar .tip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .instruction-bar .tip span.accent { color: #f0c27f; }
+    .instruction-bar .tip span.green  { color: #3fb950; }
+    .instruction-bar .tip span.red    { color: #f85149; }
+    .instruction-bar .sep { color: #30363d; }
+
+    /* ── Chart iframe ── */
+    .chart-wrap {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
+    /* ── Footer nav ── */
+    footer {
+      height: 36px;
+      background: #0d1117;
+      border-top: 1px solid #21262d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      flex-shrink: 0;
+      overflow-x: auto;
+      padding: 0 12px;
+    }
+
+    footer a {
+      color: #8b949e;
+      text-decoration: none;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      white-space: nowrap;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    footer a:hover { background: #21262d; color: #c9d1d9; }
+    footer a.active { background: #1f3347; color: #58a6ff; }
+    footer .sep { color: #30363d; font-size: 11px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">&#9651;</div>
+      <span class="logo-text">Algorithmic Trading Engine</span>
+    </div>
+    <div class="header-badges">
+      <span class="badge badge-green">5 Strategies</span>
+      <span class="badge badge-blue">ML Signals</span>
+      <span class="badge badge-purple">3D Interactive</span>
+    </div>
+  </header>
+
+  <div class="instruction-bar">
+    <span class="tip">
+      <span class="accent">&#9889; Risk Slider</span>&nbsp;&mdash;&nbsp;drag left for
+      <span class="green">lower risk / lower return</span>,
+      right for
+      <span class="red">higher risk / higher return</span>
+    </span>
+    <span class="sep">|</span>
+    <span class="tip">Scroll to zoom &bull; Click+drag to rotate &bull; Hover for trade details</span>
+  </div>
+
+  <div class="chart-wrap">
+    <iframe
+      src="charts/AAPL_combined_signal_backtest_risk_bar_3d.html"
+      title="3D Backtest with Risk Level Slider"
+      loading="lazy"
+    ></iframe>
+  </div>
+
+  <footer>
+    <a href="charts/AAPL_combined_signal_backtest_risk_bar_3d.html" class="active">&#9889; Risk Bar (3D)</a>
+    <span class="sep">|</span>
+    <a href="charts/AAPL_equity_comparison_3d.html">Equity Comparison (3D)</a>
+    <span class="sep">|</span>
+    <a href="charts/AAPL_combined_signal_3d.html">Combined Signal (3D)</a>
+    <span class="sep">|</span>
+    <a href="charts/AAPL_ml_signal_3d.html">ML Signal (3D)</a>
+    <span class="sep">|</span>
+    <a href="charts/AAPL_macd_3d.html">MACD (3D)</a>
+    <span class="sep">|</span>
+    <a href="charts/PORTFOLIO_combined + risk_mgmt_backtest.html">Portfolio Backtest</a>
+    <span class="sep">|</span>
+    <a href="charts/AAPL_comparison.html">Strategy Comparison</a>
+  </footer>
+
+</body>
+</html>
